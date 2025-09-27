@@ -4,10 +4,15 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { MoreHorizontal, ThumbsUp, ThumbsDown, Clock, Building, TrendingUp, MessageSquare, Check, X, Pause } from "lucide-react";
+import { MoreHorizontal, ThumbsUp, ThumbsDown, Clock, Building, TrendingUp, MessageSquare, Check, X, Pause, Plus } from "lucide-react";
 
 const stages = ["New", "Screening", "Diligence", "IC Ready", "Decided"];
+
+const sectors = ["AI/ML", "CleanTech", "HealthTech", "DevTools", "FinTech", "EdTech", "E-commerce", "SaaS", "Other"];
 
 const deals = [
   {
@@ -70,6 +75,16 @@ export default function Pipeline() {
   const [sortPanelOpen, setSortPanelOpen] = useState(false);
   const [newComment, setNewComment] = useState("");
   const [dealsData, setDealsData] = useState(deals);
+  const [addDealOpen, setAddDealOpen] = useState(false);
+  const [newDeal, setNewDeal] = useState({
+    company: "",
+    name: "",
+    amount: "",
+    sector: "",
+    description: "",
+    score: 5,
+    stage: "New"
+  });
 
   const getScoreColor = (score) => {
     if (score >= 8) return "text-success";
@@ -111,6 +126,35 @@ export default function Pipeline() {
       deal.id === dealId ? { ...deal, comments: [...deal.comments, comment] } : deal
     ));
     setNewComment("");
+  };
+
+  const handleAddDeal = () => {
+    if (!newDeal.company || !newDeal.name || !newDeal.amount || !newDeal.sector) {
+      return;
+    }
+
+    const deal = {
+      id: Date.now().toString(),
+      ...newDeal,
+      lastUpdate: "now",
+      comments: []
+    };
+
+    setDealsData(prev => [...prev, deal]);
+    setNewDeal({
+      company: "",
+      name: "",
+      amount: "",
+      sector: "",
+      description: "",
+      score: 5,
+      stage: "New"
+    });
+    setAddDealOpen(false);
+  };
+
+  const handleNewDealChange = (field, value) => {
+    setNewDeal(prev => ({ ...prev, [field]: value }));
   };
 
   return (
@@ -184,8 +228,8 @@ export default function Pipeline() {
               </div>
             </SheetContent>
           </Sheet>
-          <Button>
-            <span className="mr-2">+</span>
+          <Button onClick={() => setAddDealOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
             Add Deal
           </Button>
         </div>
@@ -416,6 +460,127 @@ export default function Pipeline() {
                 <Button variant="outline" className="w-full">
                   <Building className="h-4 w-4 mr-2" />
                   Company Profile
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Deal Panel (if open) */}
+      {addDealOpen && (
+        <div className="fixed inset-y-0 right-0 w-full sm:w-96 glass-sidebar border-l border-border/50 p-4 sm:p-6 overflow-y-auto z-50">
+          <div className="space-y-6">
+            <div className="flex items-start justify-between">
+              <div>
+                <h2 className="text-lg font-bold">Add New Deal</h2>
+                <p className="text-sm text-muted-foreground">Create a new deal in your pipeline</p>
+              </div>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => setAddDealOpen(false)}
+              >
+                ✕
+              </Button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="company">Company Name</Label>
+                <Input
+                  id="company"
+                  placeholder="Enter company name"
+                  value={newDeal.company}
+                  onChange={(e) => handleNewDealChange("company", e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="name">Deal Name</Label>
+                <Input
+                  id="name"
+                  placeholder="e.g., Series A, Seed, Pre-Seed"
+                  value={newDeal.name}
+                  onChange={(e) => handleNewDealChange("name", e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="amount">Deal Amount</Label>
+                <Input
+                  id="amount"
+                  placeholder="e.g., $15M, $3M"
+                  value={newDeal.amount}
+                  onChange={(e) => handleNewDealChange("amount", e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="sector">Sector</Label>
+                <Select value={newDeal.sector} onValueChange={(value) => handleNewDealChange("sector", value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select sector" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {sectors.map((sector) => (
+                      <SelectItem key={sector} value={sector}>
+                        {sector}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  placeholder="Brief description of the deal"
+                  value={newDeal.description}
+                  onChange={(e) => handleNewDealChange("description", e.target.value)}
+                  rows={3}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="score">Score (1-10)</Label>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="range"
+                      min="1"
+                      max="10"
+                      step="0.1"
+                      value={newDeal.score}
+                      onChange={(e) => handleNewDealChange("score", parseFloat(e.target.value))}
+                      className="flex-1"
+                    />
+                    <span className="text-sm font-medium w-8">{newDeal.score}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>Poor</span>
+                    <span>Excellent</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="space-y-2 pt-4">
+                <Button 
+                  onClick={handleAddDeal}
+                  className="w-full"
+                  disabled={!newDeal.company || !newDeal.name || !newDeal.amount || !newDeal.sector}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Deal
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setAddDealOpen(false)}
+                  className="w-full"
+                >
+                  Cancel
                 </Button>
               </div>
             </div>
